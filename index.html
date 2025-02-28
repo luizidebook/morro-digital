@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <!--
+    Morro de São Paulo Digital
+    Documento principal que integra todos os módulos JS e bibliotecas externas.
+  -->
+
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <!-- SEO e Metatags -->
+  <title data-i18n="title">Morro de São Paulo Digital</title>
+  <meta name="description" content="Descrição do site Morro Digital." />
+  <meta name="keywords" content="turismo, morro, digital, viagens, pontos turísticos" />
+  <meta name="author" content="Morro Digital" />
+  <meta property="og:title" content="Morro Digital" />
+  <meta property="og:description" content="Descrição do site Morro Digital." />
+  <meta property="og:image" content="link_da_imagem" />
+  <meta property="og:url" content="URL do site" />
+
+  <!-- CSS Principal -->
+  <link rel="stylesheet" href="css/styles.css" />
+
+  <!-- Bibliotecas Externas -->
+  <!-- Leaflet -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+  
+  <!-- Leaflet Routing Machine -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine/dist/leaflet-routing-machine.css" />
+  <script src="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.js" defer></script>
+
+  <!-- Awesomplete -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/awesomplete/1.1.5/awesomplete.min.css" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/awesomplete/1.1.5/awesomplete.min.js" defer></script>
+
+  <!-- Swiper (Carrossel) -->
+  <link rel="stylesheet" href="https://unpkg.com/swiper/swiper-bundle.min.css" />
+  <script src="https://unpkg.com/swiper/swiper-bundle.min.js" defer></script>
+
+  <!-- Font Awesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" />
+
+  <!-- Fuse.js (Busca Inteligente) -->
+  <script src="https://cdn.jsdelivr.net/npm/fuse.js/dist/fuse.js" defer></script>
+
+  <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js" defer></script>
+
+<!-- Módulos JS (Carregados em ordem para garantir as dependências) -->
+<script type="module" src="js/config.js" defer></script>
+<script type="module" src="js/globals.js" defer></script>
+<script type="module" src="js/events.js" defer></script>
+<script type="module" src="js/permissions.js" defer></script>
+<script type="module" src="js/cache.js" defer></script>
+<script type="module" src="js/stateManagement.js" defer></script>
+<script type="module" src="js/mapInitialization.js" defer></script>
+<script type="module" src="js/mapVisualizations.js" defer></script>
+<script type="module" src="js/osmInteraction.js" defer></script>
+<script type="module" src="js/locationTracking.js" defer></script>
+<script type="module" src="js/routeCreation.js" defer></script>
+<script type="module" src="js/navigation.js" defer></script>
+<script type="module" src="js/tutorial.js" defer></script>
+<script type="module" src="js/uiController.js" defer></script>
+<script type="module" src="js/menuController.js" defer></script>
+<script type="module" src="js/submenuController.js" defer></script>
+<script type="module" src="js/translationController.js" defer></script>
+<script type="module" src="js/voiceInteractionController.js" defer></script>
+<script type="module" src="js/gamificationMarketing.js" defer></script>
+<script type="module" src="js/notifications.js" defer></script>
+<script type="module" src="js/utils.js" defer></script>
+</head>
+<body>
+  <!-- Mapa e Contêiner Principal -->
+  <div id="map-container">
+    <div id="map"></div>
+  </div>
+
+  <!-- Barra de Progresso (exibida dinamicamente) -->
+  <div id="progress-bar" class="progress-bar hidden" style="display:none;">0% completo</div>
+
+  <!-- Loader Visual para Rotas -->
+  <div id="route-loader" class="loader hidden">
+    <div class="spinner"></div>
+    <p>Carregando rota...</p>
+  </div>
+
+  <!-- Contêiner de Notificações -->
+  <div id="notification-container" class="notification-container"></div>
+
+  <!-- Modais / Overlays -->
+  <!-- Assistente Virtual -->
+  <div id="assistant-modal" class="modal">
+    <button id="close-assistant-modal" class="close-btn" onclick="closeAssistantModal()" data-i18n="close_modal">X</button>
+    <div class="modal-content" id="assistant-modal-text"></div>
+  </div>
+
+  <!-- Boas-Vindas e Seleção de Idioma -->
+  <div id="welcome-modal" class="welcome-modal">
+    <div class="modal-content">
+      <p id="welcome-message" data-i18n="welcome">Bem-vindo ao nosso site!</p>
+      <h1 data-i18n="welcomeTitle">BEM-VINDO!</h1>
+      <p data-i18n="chooseLanguage">Escolha seu idioma:</p>
+      <div id="language-selection">
+        <button class="lang-btn" data-lang="pt" title="Português - Brasil">
+          <img src="https://upload.wikimedia.org/wikipedia/commons/0/05/Flag_of_Brazil.svg" alt="Bandeira do Brasil" style="width:30px;height:20px;">
+        </button>
+        <button class="lang-btn" data-lang="es" title="Español">
+          <img src="https://upload.wikimedia.org/wikipedia/commons/9/9a/Flag_of_Spain.svg" alt="Bandeira da Espanha" style="width:30px;height:20px;">
+        </button>
+        <button class="lang-btn" data-lang="en" title="English">
+          <img src="https://upload.wikimedia.org/wikipedia/commons/a/a4/Flag_of_the_United_States.svg" alt="Bandeira dos Estados Unidos" style="width:30px;height:20px;">
+        </button>
+        <button class="lang-btn" data-lang="he" title="Hebrew">
+          <img src="https://upload.wikimedia.org/wikipedia/commons/d/d4/Flag_of_Israel.svg" alt="Bandeira de Israel" style="width:30px;height:20px;">
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Menu Lateral Flutuante -->
+  <div id="floating-menu" class="floating-menu hidden">
+    <button class="menu-btn" data-feature="dicas" aria-label="Dicas"><i class="fas fa-lightbulb"></i></button>
+    <button class="menu-btn zoom-in" aria-label="Aumentar Zoom"><i class="fas fa-plus"></i></button>
+    <button class="menu-btn zoom-out" aria-label="Diminuir Zoom"><i class="fas fa-minus"></i></button>
+    <button class="menu-btn" data-feature="pesquisar" aria-label="Pesquisar"><i class="fas fa-search"></i></button>
+    <button class="menu-btn" data-feature="sobre" aria-label="Sobre"><i class="fas fa-info-circle"></i></button>
+  </div>
+
+  <!-- Menu Lateral Expansível (Submenus são carregados dinamicamente) -->
+  <div id="menu" class="menu">
+    <button id="close-menu-btn" class="close-side-menu-btn" onclick="closeSideMenu()" data-i18n="close_menu">X</button>
+    <div id="touristSpots-submenu" class="submenu" data-feature="touristSpots"></div>
+    <div id="tours-submenu" class="submenu" data-feature="tours"></div>
+    <div id="beaches-submenu" class="submenu" data-feature="beaches"></div>
+    <div id="nightlife-submenu" class="submenu" data-feature="nightlife"></div>
+    <div id="restaurants-submenu" class="submenu" data-feature="restaurants"></div>
+    <div id="inns-submenu" class="submenu" data-feature="inns"></div>
+    <div id="shops-submenu" class="submenu" data-feature="shops"></div>
+    <div id="emergencies-submenu" class="submenu" data-feature="emergencies"></div>
+    <div id="tips-submenu" class="submenu" data-feature="tips"></div>
+    <div id="about-submenu" class="submenu" data-feature="about"></div>
+    <button id="tutorial-btn" class="control-btn" style="display:none;" onclick="initializeTutorial()" data-i18n="start_tutorial">Iniciar Tutorial</button>
+  </div>
+
+  <!-- Seção de Botões de Controle (exibidos dinamicamente conforme a ação) -->
+  <div class="control-buttons">
+    <!-- Botões para fluxo de tutorial, navegação, etc. -->
+    <button id="tutorial-iniciar-btn" class="control-btn" style="display:none;" data-action="next" onclick="nextTutorialStep()" data-i18n="tutorialStart">Iniciar</button>
+    <button id="pontos-turisticos-btn" class="control-btn" style="display:none" data-action="pontos-turisticos" onclick="performControlAction('pontos-turisticos')" data-feature="pontos-turisticos" data-i18n="tourist_spots">Pontos Turísticos</button>
+    <button id="passeios-btn" class="control-btn" style="display:none" onclick="performControlAction('passeios')" data-feature="passeios" data-i18n="tours">Passeios</button>
+    <button id="praias-btn" class="control-btn" style="display:none" data-action="praias" onclick="performControlAction('praias')" data-feature="praias" data-i18n="beaches">Praias</button>
+    <button id="festas-btn" class="control-btn" style="display:none" onclick="performControlAction('festas')" data-feature="festas" data-i18n="parties">Festas</button>
+    <button id="restaurantes-btn" class="control-btn" style="display:none" data-action="restaurantes" onclick="performControlAction('restaurantes')" data-feature="restaurantes" data-i18n="restaurants">Restaurantes</button>
+    <button id="pousadas-btn" class="control-btn" style="display:none" onclick="performControlAction('pousadas')" data-feature="pousadas" data-i18n="inns">Pousadas</button>
+    <button id="lojas-btn" class="control-btn" style="display:none" onclick="performControlAction('lojas')" data-feature="lojas" data-i18n="shops">Lojas</button>
+    <button id="emergencias-btn" class="control-btn" style="display:none" onclick="performControlAction('emergencias')" data-feature="emergencias" data-i18n="emergencies">Emergências</button>
+    <button id="criar-roteiro-personalizado-btn" class="control-btn" style="display:none" onclick="performControlAction('roteiro')" data-feature="roteiro" data-i18n="Roteiro Personalizado">Roteiro Personalizado</button>
+    <button class="control-btn" id="about-more-btn" style="display:none;" data-i18n="aboutMore">Fotos</button>
+    <button class="control-btn" id="create-route-btn" style="display:none;" data-action="create-route" data-i18n="createRoute">Como Chegar</button>
+    <button class="control-btn" id="reserve-restaurants-btn" style="display:none;" data-i18n="reserveTable">Reservar Mesa</button>
+    <button class="control-btn" id="call-btn" style="display:none;" data-i18n="call">Ligar</button>
+    <button class="control-btn" id="reserve-inns-btn" style="display:none;" data-i18n="reserveRoom">Reservar Quarto</button>
+    <button class="control-btn" id="reserve-chairs-btn" style="display:none;" data-i18n="reserveChairs">Reservar Cadeiras</button>
+    <button class="control-btn" id="buy-ticket-btn" style="display:none;" data-i18n="buyTicket">Comprar Ingresso</button>
+    <button class="control-btn" id="tour-btn" style="display:none;" data-i18n="reserveTour">Reservar Passeio</button>
+    <button id="tutorial-send-btn" class="control-btn" style="display:none;" data-action="next" onclick="performControlAction('next')" data-i18n="send">Enviar</button>      
+    <button id="access-site-btn" class="control-btn" style="display:none;" data-action="access-site" onclick="performControlAction('access-site')" data-i18n="accessSite">Acessar Site</button>
+    <button id="start-navigation-button" class="control-btn" style="display:none;" data-i18n="startNavigation">Iniciar Navegação</button>
+    <button id="navigation-end-btn" class="control-btn" style="display:none;" onclick="endNavigation()" data-i18n="cancel_navigation">Parar Navegação</button>
+    <button class="control-btn" id="tutorial-menu-btn" style="display:none;" onclick="showTutorialStep('ask-interest')" data-i18n="access_menu">Acessar Menu</button>
+    <button id="cancel-navigation-button" style="display:none;" data-i18n="cancel_navigation">Cancelar Navegação</button>
+    <button id="pause-navigation-button" class="control-btn" style="display:none;" data-i18n="pause">Pausar</button>
+  </div>
+
+  <!-- Botão Extra para Cancelar Navegação -->
+  <button id="cancel-nav-btn" class="hidden">Cancelar Navegação</button>
+
+  <!-- Modal de Carrossel de Imagens -->
+  <div id="carousel-modal" class="carousel-modal">
+    <div class="modal-content">
+      <span id="carousel-modal-close" onclick="hideModal('carousel-modal')" class="modal-close" data-i18n="close_modal_carousel">X</span>
+      <div class="swiper-container">
+        <div class="swiper-wrapper"></div>
+        <div class="swiper-button-next"></div>
+        <div class="swiper-button-prev"></div>
+        <div class="swiper-pagination"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Pré-visualização da Rota -->
+  <div id="route-preview" class="route-preview hidden"></div>
+
+  <!-- Resumo da Rota -->
+  <div id="route-summary" class="hidden">
+    <h3 data-i18n="route_summary_title">Resumo da Rota</h3>
+    <p id="route-distance" data-i18n="route_distance">Distância: </p>
+    <p id="route-eta" data-i18n="route_eta">Tempo Estimado: </p>
+  </div>
+
+  <!-- Elementos de Simulação e Rotas Alternativas -->
+  <div id="simulate-container">
+    <label>
+      <input type="checkbox" id="simulate-route-checkbox" />
+      Simular Navegação
+    </label>
+  </div>
+  <select id="route-options" class="hidden"></select>
+
+  <!-- Banner de Instruções -->
+  <div id="instruction-banner" class="instruction-banner hidden">
+    <div class="instruction-icon">
+      <span id="instruction-arrow">⬅️</span>
+    </div>
+    <div class="instruction-text">
+      <h2 id="instruction-main">Turn left</h2>
+      <p id="instruction-details">200m - Rua Caminho do Farol</p>
+    </div>
+  </div>
+
+  <!-- Rodapé da Rota -->
+  <div id="route-footer" class="route-footer hidden">
+    <div class="route-actions">
+      <button id="start-navigation-rodape-btn" class="route-btn start-btn">Iniciar Navegação</button>
+      <button id="menu-details-btn" class="route-btn details-btn">Acessar menu</button>
+      <button id="cancel-route-btn" class="route-btn cancel-btn">Voltar</button>
+    </div>
+  </div>
+
+  <!-- Script Principal -->
+  <!-- Note que agora toda a lógica está distribuída nos 21 módulos JS incluídos acima -->
+</body>
+</html>
