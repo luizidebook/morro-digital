@@ -56,4 +56,4 @@ Feedback e Contribuições:
 Para sugestões ou contribuições, por favor abra uma issue ou envie um pull request.
 
 Licença
-Este projeto está licenciado sob [INSERIR A LICENÇA AQUI].
+Este projeto está licenciado sob [INSERIR A LICENÇA AQUI] .
