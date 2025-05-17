@@ -1,0 +1,811 @@
+/* ======================================================
+   ASSISTANT MODAL UI
+   
+   Arquivo CSS completo para gerenciar a interface do modal
+   do assistente virtual, incluindo:
+   - Layout base e posicionamento
+   - Aparência visual (cores, sombras, bordas)
+   - Efeitos visuais (glassmorphism, transições)
+   - Animações de entrada/saída
+   - Estilos para mensagens (usuário/assistente)
+   - Responsividade
+   - Suporte para tema escuro
+   - Carrossel e componentes especiais
+   - Controles e botões
+   
+   Organizado por seções para fácil manutenção
+   ====================================================== */
+
+/* -----------------------------------------------------
+   1. DEFINIÇÕES PRINCIPAIS E CONTAINERS
+   ----------------------------------------------------- */
+
+/* Container principal do assistente */
+.assistant-container {
+  bottom: 90px;
+  z-index: 2000;
+  width: auto;
+  min-width: 80px;
+  position: fixed;
+}
+
+/* Modo de navegação ativa */
+body.navigation-active .assistant-container {
+  bottom: 180px; /* Mais alto quando a navegação está ativa */
+}
+
+/* Modal principal */
+#assistant-messages {
+  /* Posicionamento */
+  position: fixed;
+  left: 44%; /* Centralizar horizontalmente */
+  bottom: 30%; /* Posição padrão: bottom 40% */
+  transform: translateX(-50%);
+  z-index: var(--z-overlay, 1000);
+
+  /* Dimensões - Definindo largura fixa de 70% */
+  width: 80%; /* Definir largura para sempre ser 70% da viewport */
+  max-width: 100%; /* Limitar largura máxima também a 70% */
+  min-width: 250px; /* Garantir uma largura mínima para dispositivos pequenos */
+  height: auto; /* Ajustar altura automaticamente ao conteúdo */
+  max-height: 70vh; /* Limitar altura máxima */
+  min-height: auto;
+  padding-top: 3rem; /* Espaço para o botão de minimizar */
+
+  /* Aparência */
+  background: rgba(245, 247, 250, 0.92);
+  border-radius: 1.25rem;
+  box-shadow: 0 10px 25px rgba(0, 75, 199, 0.15), 0 5px 12px rgba(0, 0, 0, 0.1),
+    0 0 0 1px rgba(255, 255, 255, 0.3);
+  border: 0.19rem solid rgba(253, 253, 253, 0.8);
+
+  /* Efeito de vidro */
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+
+  /* Layout */
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-sizing: border-box;
+  margin-bottom: 1px;
+  margin-right: 10px;
+
+  /* Comportamento */
+  pointer-events: auto;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+
+  /* Ocultar barras de rolagem */
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+#assistant-messages::-webkit-scrollbar {
+  display: none;
+  width: 0;
+  height: 0;
+}
+
+/* Botão de minimizar - com zona de segurança */
+#assistant-messages .minimize-button {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  border: none;
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: #004bc7;
+  cursor: pointer;
+  width: 2.75rem;
+  height: 2.75rem;
+  display: flex;
+  z-index: 20; /* Aumentado para garantir que fique acima do conteúdo */
+  padding: 0;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.5); /* Melhor contraste */
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+  margin: 0.25rem; /* Adicionar margem para zona de segurança */
+}
+
+#assistant-messages .minimize-button:hover {
+  background: rgba(255, 255, 255, 0.5);
+  transform: scale(1.05);
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+/* Ajustes para modo 3D do mapa */
+body.map-3d-mode #assistant-messages {
+  z-index: 500;
+}
+
+/* -----------------------------------------------------
+   2. ÁREA DE MENSAGENS
+   ----------------------------------------------------- */
+
+#assistant-messages .messages-area {
+  flex: 1;
+  overflow-y: auto;
+  max-height: calc(60vh);
+  height: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem; /* Aumentado para melhor espaçamento entre mensagens */
+  position: relative;
+  scroll-behavior: smooth;
+  transform-origin: bottom center; /* Controla o ponto de origem do crescimento */
+  padding: 0.5rem 0.25rem 0.75rem; /* Padding interno para evitar colisão com bordas */
+
+  /* Ocultar barra de rolagem mantendo funcionalidade */
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE and Edge */
+}
+
+/* Classes para diferentes estados do modal */
+#assistant-messages.grow-upward {
+  transition: height 0.3s ease-out, bottom 0.3s ease-out;
+  transform-origin: bottom center;
+  height: auto !important; /* Garantir que a altura se ajuste ao conteúdo */
+  overflow: visible; /* Permitir que o conteúdo fique visível */
+}
+
+/* Ajustes para o comportamento de crescimento para cima */
+#assistant-messages.grow-upward .messages-area {
+  max-height: unset; /* Permitir altura natural */
+  overflow-y: visible; /* Mostrar todo o conteúdo */
+  padding-bottom: 0.5rem; /* Adicionar padding inferior para melhor aparência */
+}
+
+/* Estado de interação com mapa/carrossel/navegação */
+#assistant-messages.map-interaction {
+  bottom: 25% !important; /* Posição durante interações com o mapa */
+}
+
+/* Garantir que não haja sobreposição do conteúdo com o botão de minimizar */
+#assistant-messages .messages-area {
+  padding-top: 0.25rem; /* Evitar sobreposição com o botão de minimizar */
+}
+
+/* Garantir que o modal se ajuste ao conteúdo */
+#assistant-messages.auto-size {
+  height: auto !important;
+  min-height: 0 !important;
+}
+
+/* Ocultar barra de rolagem para Chrome, Safari e Opera */
+#assistant-messages .messages-area::-webkit-scrollbar {
+  display: none;
+  width: 0;
+  height: 0;
+  background: transparent;
+}
+
+/* Garantir que elementos internos também não mostrem scrollbars */
+#assistant-messages .navigation-instruction-area {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  overflow-y: auto;
+}
+
+#assistant-messages .navigation-instruction-area::-webkit-scrollbar {
+  display: none;
+  width: 0;
+  height: 0;
+}
+
+/* Garantir que o carrossel não mostre barras de rolagem */
+#assistant-messages .swiper-container::-webkit-scrollbar,
+.swiper-wrapper::-webkit-scrollbar {
+  display: none;
+  width: 0;
+  height: 0;
+}
+
+.swiper-container,
+.swiper-wrapper {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+/* -----------------------------------------------------
+   3. ESTILOS PARA MENSAGENS
+   ----------------------------------------------------- */
+
+#assistant-messages .message {
+  padding: var(--spacing-xl, 1rem);
+  max-width: 100%;
+  word-wrap: break-word;
+  line-height: 1.5;
+  position: relative;
+  font-size: var(--font-size-base, 1rem);
+  box-sizing: border-box;
+  border-radius: 1rem;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+  transition: transform 0.2s ease;
+  margin-right: 5px;
+  margin-left: 5px;
+  margin-top: 5px;
+  animation: messageEntry 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* Mensagens do usuário */
+#assistant-messages .message.user {
+  background: linear-gradient(135deg, #004bc7, #0062ff);
+  color: white;
+  align-self: flex-end;
+  border-bottom-right-radius: 0.2rem;
+  box-shadow: 0 3px 8px rgba(0, 75, 199, 0.25);
+}
+
+/* Mensagens do assistente */
+#assistant-messages .message.assistant {
+  align-self: flex-start;
+  height: 100%;
+  background: linear-gradient(135deg, #ffffff, #f5f7fa);
+  color: #2f2b2b;
+  border-bottom-left-radius: 0.2rem;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.05);
+  border: 1px solid rgba(229, 231, 235, 0.6);
+}
+
+/* Efeito hover para mensagens */
+#assistant-messages .message:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 5px 12px rgba(0, 0, 0, 0.1);
+}
+
+/* Borda ao passar o mouse */
+#assistant-messages .message::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  border-radius: inherit;
+  box-shadow: 0 0 0 0 rgba(59, 130, 246, 0);
+  opacity: 0;
+  transition: box-shadow 0.3s, opacity 0.3s;
+  pointer-events: none;
+}
+
+#assistant-messages .message:hover::after {
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+  opacity: 1;
+}
+
+/* Efeito de cursor digitando */
+@keyframes pulseCursor {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.3;
+  }
+}
+
+.typing-cursor {
+  display: inline-block;
+  margin-left: 0.125rem;
+  color: #004bc7;
+  animation: pulseCursor 1.2s ease-in-out infinite;
+  font-weight: bold;
+}
+
+/* -----------------------------------------------------
+   4. CARROSSEL E COMPONENTES ESPECIAIS (DESATIVADO - MOVIDO PARA CAROUSEL MODAL)
+   ----------------------------------------------------- */
+
+/* Nota: As configurações do carrossel foram movidas para carouselModal.css */
+/* Mantendo apenas o necessário para compatibilidade */
+
+#assistant-messages .navigation-instruction-area {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  overflow-y: auto;
+}
+
+/* -----------------------------------------------------
+   5. CONTROLES DO MODAL (BOTÕES)
+   ----------------------------------------------------- */
+
+/* Botão de minimizar - com zona de segurança */
+#assistant-messages .minimize-button {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  border: none;
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: #004bc7;
+  cursor: pointer;
+  width: 2.75rem;
+  height: 2.75rem;
+  display: flex;
+  z-index: 20; /* Aumentado para garantir que fique acima do conteúdo */
+  padding: 0;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.5); /* Melhor contraste */
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+  margin: 0.25rem; /* Adicionar margem para zona de segurança */
+}
+
+/* Botão de minimizar - com zona de segurança */
+#assistant-messages .minimize-button {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  border: none;
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: #004bc7;
+  cursor: pointer;
+  width: 2.75rem;
+  height: 2.75rem;
+  display: flex;
+  z-index: 20; /* Aumentado para garantir que fique acima do conteúdo */
+  padding: 0;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.5); /* Melhor contraste */
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+  margin: 0.25rem; /* Adicionar margem para zona de segurança */
+}
+
+#assistant-messages .minimize-button:hover {
+  background: rgba(255, 255, 255, 0.5);
+  transform: scale(1.05);
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+#assistant-messages .minimize-button:hover {
+  background: rgba(255, 255, 255, 0.5);
+  transform: scale(1.05);
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+#assistant-messages .minimize-button:active {
+  transform: scale(0.95);
+  background: rgba(255, 255, 255, 0.7);
+}
+
+/* Seletor de voz do assistente */
+.assistant-voice-selector {
+  /* Dimensões mínimas de toque 44px (2.75rem) */
+  height: 2.75rem;
+  width: auto;
+  min-width: 13.75rem;
+  padding: 0 var(--spacing-md, 1rem);
+
+  /* Aparência */
+  background-color: #f0f3f5;
+  border: 0.0625rem solid #ccd0d5;
+  border-radius: calc(2.75rem / 2);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+
+  /* Texto */
+  font-family: var(--font-sans, system-ui, -apple-system, sans-serif);
+  font-size: var(--font-size-sm, 0.875rem);
+  font-weight: 500;
+  color: #4a4a4a;
+  line-height: 2.75rem;
+  text-align: center;
+
+  /* Efeitos */
+  transition: all 0.2s ease-in-out;
+}
+
+.assistant-voice-selector:hover {
+  background-color: #e4e9ed;
+  box-shadow: 0 3px 5px rgba(0, 0, 0, 0.15);
+  cursor: pointer;
+}
+
+/* -----------------------------------------------------
+   6. ÁREA DE INPUT DO ASSISTENTE
+   ----------------------------------------------------- */
+
+.assistant-input-area {
+  position: fixed;
+  bottom: 1rem;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100%;
+  max-width: 600vh;
+  display: flex;
+  align-items: center;
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 1.5rem;
+  padding: 0.75rem 1rem;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+  z-index: var(--z-overlay, 1000);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(229, 231, 235, 0.8);
+  transition: all 0.3s ease;
+}
+
+.assistant-input-area input {
+  flex: 1;
+  border: none;
+  background: transparent;
+  padding: 0.5rem 0.75rem;
+  font-size: 1rem;
+  color: #333;
+  outline: none;
+}
+
+.assistant-input-area button {
+  background: transparent;
+  border: none;
+  color: #004bc7;
+  font-size: 1.25rem;
+  cursor: pointer;
+  margin-left: 0.5rem;
+  width: 2.5rem;
+  height: 2.5rem;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border-radius: 50%;
+  transition: all 0.2s ease;
+}
+
+.assistant-input-area button:hover {
+  background: rgba(0, 75, 199, 0.1);
+}
+
+.assistant-input-area button:active {
+  transform: scale(0.9);
+}
+
+/* Ajustes para modo 3D do mapa */
+body.map-3d-mode .assistant-input-area {
+  z-index: 500;
+}
+
+/* -----------------------------------------------------
+   7. ESTADOS E VISIBILIDADE
+   ----------------------------------------------------- */
+
+/* Estado oculto */
+#assistant-messages.hidden,
+.assistant-input-area.hidden {
+  display: none !important;
+  opacity: 0 !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+  position: absolute !important;
+  left: -9999px !important;
+  top: -9999px !important;
+  height: 0 !important;
+  width: 0 !important;
+  overflow: hidden !important;
+  z-index: -999 !important;
+  transition: none !important;
+  animation: none !important;
+}
+
+/* Classe específica para ajuste automático vertical */
+#assistant-messages.grow-upward.showing-content {
+  min-height: auto !important;
+  height: auto !important;
+  overflow: visible !important;
+  transition: height 0.3s ease, bottom 0.3s ease;
+}
+
+/* Garantir que o container se ajuste ao conteúdo sem espaços em branco */
+#assistant-messages.auto-size {
+  height: auto !important;
+  min-height: 0 !important;
+  max-height: 70vh !important;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Garantir que o botão de minimizar tenha uma zona clara */
+#assistant-messages:after {
+  content: "";
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 4rem;
+  height: 3.5rem;
+  background: linear-gradient(
+    135deg,
+    transparent 30%,
+    rgba(245, 247, 250, 0.5) 100%
+  );
+  border-radius: 1.25rem 1.25rem 0 0;
+  pointer-events: none;
+  z-index: 5;
+}
+
+/* Quando a área de mensagens está oculta */
+#assistant-messages .messages-area[style*="display: none"] {
+  display: none !important;
+}
+
+/* Estado de transição ao ocultar */
+#assistant-messages.hiding {
+  opacity: 0;
+  transform: translateX(-50%) translateY(20px);
+  pointer-events: none;
+  animation: modalExit 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+#assistant-messages.repositioned {
+  height: auto !important;
+  min-height: auto !important;
+  max-height: none !important;
+}
+
+#assistant-messages.repositioned .messages-area {
+  height: auto !important;
+  min-height: auto !important;
+  max-height: none !important;
+  overflow-y: visible !important;
+  bottom: 20% !important; /* Ajustar para o novo posicionamento */
+}
+
+/* -----------------------------------------------------
+   8. ANIMAÇÕES E TRANSIÇÕES
+   ----------------------------------------------------- */
+
+/* Animação de entrada para o modal */
+@keyframes modalEntry {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+}
+
+#assistant-messages:not(.hidden) {
+  animation: modalEntry 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* Animação de saída para o modal */
+@keyframes modalExit {
+  from {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateX(-50%) translateY(20px);
+  }
+}
+
+/* Animação de entrada para mensagens */
+@keyframes messageEntry {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* -----------------------------------------------------
+   9. MODO ESCURO
+   ----------------------------------------------------- */
+
+@media (prefers-color-scheme: dark) {
+  #assistant-messages {
+    background: rgba(30, 41, 59, 0.85);
+    border-color: rgba(71, 85, 105, 0.6);
+  }
+
+  #assistant-messages .message.assistant {
+    background: linear-gradient(135deg, #334155, #1e293b);
+    color: #e2e8f0;
+    border-color: rgba(71, 85, 105, 0.6);
+  }
+
+  #assistant-messages .message.user {
+    background: linear-gradient(135deg, #0369a1, #0284c7);
+  }
+
+  #assistant-messages .minimize-button {
+    color: #60a5fa;
+  }
+
+  .assistant-input-area {
+    background: rgba(30, 41, 59, 0.9);
+    border-color: rgba(71, 85, 105, 0.6);
+  }
+
+  .assistant-input-area input {
+    color: #e2e8f0;
+  }
+
+  .assistant-input-area button {
+    color: #60a5fa;
+  }
+
+  .assistant-voice-selector {
+    background-color: #334155;
+    border-color: #475569;
+    color: #e2e8f0;
+  }
+
+  .assistant-voice-selector:hover {
+    background-color: #1e293b;
+  }
+}
+
+/* Suporte explícito para tema escuro via classes */
+body.dark-theme #assistant-messages,
+[data-theme="dark"] #assistant-messages {
+  background: rgba(30, 41, 59, 0.85);
+  border-color: rgba(71, 85, 105, 0.6);
+}
+
+body.dark-theme #assistant-messages .minimize-button,
+[data-theme="dark"] #assistant-messages .minimize-button {
+  color: #60a5fa;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+body.dark-theme #assistant-messages .minimize-button:hover,
+[data-theme="dark"] #assistant-messages .minimize-button:hover {
+  background: rgba(255, 255, 255, 0.15);
+}
+
+body.dark-theme #assistant-messages .message.assistant,
+[data-theme="dark"] #assistant-messages .message.assistant {
+  background: linear-gradient(135deg, #334155, #1e293b);
+  color: #e2e8f0;
+  border-color: rgba(71, 85, 105, 0.6);
+}
+
+body.dark-theme #assistant-messages .message.user,
+[data-theme="dark"] #assistant-messages .message.user {
+  background: linear-gradient(135deg, #0369a1, #0284c7);
+}
+
+/* -----------------------------------------------------
+   10. RESPONSIVIDADE
+   ----------------------------------------------------- */
+
+/* Telas pequenas (smartphones) */
+@media (max-width: 480px) {
+  #assistant-messages {
+    width: 80%; /* Em telas muito pequenas, usar mais espaço */
+    max-width: 80%;
+    min-width: auto;
+    max-height: 70vh;
+    left: 44%;
+    bottom: 30% !important; /* Manter posicionamento consistente */
+  }
+
+  #assistant-messages.map-interaction {
+    bottom: 25% !important; /* Ajustar para interações em telas pequenas */
+  }
+
+  #assistant-messages .minimize-button {
+    top: 0rem;
+    right: 0rem;
+    width: 2.5rem;
+    height: 2.5rem;
+    font-size: 1.45rem;
+  }
+
+  .assistant-input-area {
+    width: 95%;
+    padding: 0.6rem 0.8rem;
+  }
+
+  #assistant-messages .message {
+    padding-top: 1rem;
+    padding-right: 1.5rem;
+    padding-bottom: 0.75rem;
+    padding-left: 0.55rem;
+    font-size: 0.95rem;
+    max-width: 100%; /* Garantir que as mensagens não extrapolem */
+  }
+
+  /* Garantir que o container possa crescer corretamente */
+  #assistant-messages .messages-area {
+    max-height: 60vh; /* Limitar altura em telas pequenas */
+  }
+
+  .assistant-container {
+    bottom: 80px;
+  }
+
+  body.navigation-active .assistant-container {
+    bottom: 160px;
+  }
+}
+
+/* Telas muito pequenas */
+@media (max-width: 320px) {
+  #assistant-messages {
+    min-width: 95%;
+    top: 40%;
+  }
+
+  .assistant-input-area {
+    padding: 0.5rem;
+  }
+
+  .assistant-input-area button {
+    width: 2rem;
+    height: 2rem;
+    font-size: 1rem;
+  }
+}
+
+/* Modo paisagem */
+@media (orientation: landscape) and (max-height: 600px) {
+  #assistant-messages {
+    top: 20%;
+    max-height: 60vh;
+  }
+
+  .assistant-input-area {
+    bottom: 0.5rem;
+  }
+
+  .assistant-container {
+    left: 30%;
+    max-width: 35%;
+  }
+
+  body.navigation-active .assistant-container {
+    transform: translateX(-50%);
+  }
+}
+
+/* Telas grandes (tablets e desktops) */
+@media (min-width: 992px) {
+  #assistant-messages {
+    max-width: 70vh;
+  }
+
+  .assistant-input-area {
+    max-width: 100%;
+  }
+}
+
+/* Compatibilidade com notch e áreas seguras */
+@supports (padding-bottom: env(safe-area-inset-bottom)) {
+  .assistant-input-area {
+    bottom: calc(1rem + env(safe-area-inset-bottom));
+    padding-bottom: calc(0.75rem + env(safe-area-inset-bottom) / 2);
+  }
+
+  .assistant-container {
+    bottom: calc(90px + env(safe-area-inset-bottom) / 2);
+  }
+
+  body.navigation-active .assistant-container {
+    bottom: calc(180px + env(safe-area-inset-bottom) / 2);
+  }
+}
+
+/* -----------------------------------------------------
+   11. UTILIDADES E COMPONENTES AUXILIARES
+   ----------------------------------------------------- */
+
+/* Efeito de vidro para elementos adicionais */
+.glass-effect {
+  background: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border-radius: 1rem;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
