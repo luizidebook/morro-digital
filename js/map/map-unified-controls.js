@@ -86,12 +86,12 @@ export async function initUnifiedControls() {
     // 3. Pré-inicializar o módulo 3D (sem exibição)
     await preInitialize3DMode();
 
-    // 4. Inicializar o módulo de satélite
+    // 4. Inicializar recursos de satélite (somente infraestrutura, sem opções na UI)
     initSatelliteEnhancer();
     initSatelliteControls({
       initialSource: "streets",
       addControlButton: false,
-      sources: ["streets", "google", "nasa"],
+      sources: ["streets"], // Removidas opções de satélite para ocultar no painel
     });
 
     // 5. Adicionar controles à interface
@@ -122,12 +122,12 @@ async function loadMapboxGLScripts() {
     // Carregar CSS do Mapbox GL
     const link = document.createElement("link");
     link.rel = "stylesheet";
-    link.href = "https://api.mapbox.com/mapbox-gl-js/v2.12.0/mapbox-gl.css";
+    link.href = "https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.css";
     document.head.appendChild(link);
 
     // Carregar JavaScript do Mapbox GL
     const script = document.createElement("script");
-    script.src = "https://api.mapbox.com/mapbox-gl-js/v2.12.0/mapbox-gl.js";
+    script.src = "https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.js";
     script.async = true;
     script.onload = () => {
       console.log("[map-unified-controls] Mapbox GL carregado com sucesso");
@@ -424,122 +424,7 @@ function addMapControlButtons() {
   buttonLayers.addEventListener("click", toggleMapLayersPanel);
   container.appendChild(buttonLayers);
 
-  // 2. Botão de modo 3D com texto
-  const button3D = document.createElement("button");
-  button3D.className = "map-control-button";
-  button3D.id = "toggle-3d-mode";
-  button3D.innerHTML = `
-    <span class="button-3d-text">3D</span>
-    <span class="control-tooltip">Modo 3D</span>
-  `;
-  button3D.title = "Alternar modo 3D";
-  button3D.addEventListener("click", toggle3DMode);
-  container.appendChild(button3D);
-
-  // Criar o container de botões do modo 3D (inicialmente oculto)
-  const mode3DButtons = document.createElement("div");
-  mode3DButtons.className = "mode-3d-buttons hidden";
-  mode3DButtons.id = "mode-3d-buttons";
-
-  // Botões de controle 3D
-  const tiltUpButton = createControlButton(
-    "tilt-up",
-    "Aumentar inclinação",
-    `
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-      <polyline points="18 15 12 9 6 15"></polyline>
-    </svg>
-  `
-  );
-
-  const tiltDownButton = createControlButton(
-    "tilt-down",
-    "Diminuir inclinação",
-    `
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-      <polyline points="6 9 12 15 18 9"></polyline>
-    </svg>
-  `
-  );
-
-  const rotateLeftButton = createControlButton(
-    "rotate-left",
-    "Girar para esquerda",
-    `
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-      <polyline points="9 10 4 15 9 20"></polyline>
-      <path d="M20 4v7a4 4 0 0 1-4 4H4"></path>
-    </svg>
-  `
-  );
-
-  const rotateRightButton = createControlButton(
-    "rotate-right",
-    "Girar para direita",
-    `
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-      <polyline points="15 10 20 15 15 20"></polyline>
-      <path d="M4 4v7a4 4 0 0 0 4 4h12"></path>
-    </svg>
-  `
-  );
-
-  // Adicionar eventos para os botões 3D
-  tiltUpButton.addEventListener("click", () => {
-    tiltUpButton.classList.add("clicked");
-    setTimeout(() => tiltUpButton.classList.remove("clicked"), 300);
-
-    const mapbox3D = getMapbox3DInstance();
-    if (mapbox3D) {
-      const currentPitch = mapbox3D.getPitch();
-      mapbox3D.easeTo({
-        pitch: Math.min(currentPitch + 10, 80),
-        duration: 300,
-      });
-    }
-  });
-
-  tiltDownButton.addEventListener("click", () => {
-    tiltDownButton.classList.add("clicked");
-    setTimeout(() => tiltDownButton.classList.remove("clicked"), 300);
-
-    const mapbox3D = getMapbox3DInstance();
-    if (mapbox3D) {
-      const currentPitch = mapbox3D.getPitch();
-      mapbox3D.easeTo({ pitch: Math.max(currentPitch - 10, 0), duration: 300 });
-    }
-  });
-
-  rotateLeftButton.addEventListener("click", () => {
-    rotateLeftButton.classList.add("clicked");
-    setTimeout(() => rotateLeftButton.classList.remove("clicked"), 300);
-
-    const mapbox3D = getMapbox3DInstance();
-    if (mapbox3D) {
-      const currentBearing = mapbox3D.getBearing();
-      mapbox3D.easeTo({ bearing: currentBearing - 45, duration: 300 });
-    }
-  });
-
-  rotateRightButton.addEventListener("click", () => {
-    rotateRightButton.classList.add("clicked");
-    setTimeout(() => rotateRightButton.classList.remove("clicked"), 300);
-
-    const mapbox3D = getMapbox3DInstance();
-    if (mapbox3D) {
-      const currentBearing = mapbox3D.getBearing();
-      mapbox3D.easeTo({ bearing: currentBearing + 45, duration: 300 });
-    }
-  });
-
-  // Adicionar botões ao container 3D
-  mode3DButtons.appendChild(tiltUpButton);
-  mode3DButtons.appendChild(tiltDownButton);
-  mode3DButtons.appendChild(rotateLeftButton);
-  mode3DButtons.appendChild(rotateRightButton);
-
-  // Adicionar o container de botões 3D após o botão 3D
-  container.appendChild(mode3DButtons);
+  // 2. Botão de modo 3D removido da interface (ativação automática controlada por navegação)
 
   // 3. Botão de localização
   const buttonLocation = document.createElement("button");
@@ -1019,8 +904,6 @@ function createMapLayersPanel() {
   tabs.className = "option-tabs";
   tabs.innerHTML = `
     <div class="option-tab active" data-tab="sources">Visualização</div>
-    <div class="option-tab" data-tab="3d-options">Opções 3D</div>
-    <div class="option-tab" data-tab="satellite">Satélite</div>
   `;
 
   // Add tab click handlers
@@ -1052,14 +935,6 @@ function createMapLayersPanel() {
   sourcesContent.className = "option-content active";
   sourcesContent.dataset.content = "sources";
 
-  const options3DContent = document.createElement("div");
-  options3DContent.className = "option-content";
-  options3DContent.dataset.content = "3d-options";
-
-  const satelliteContent = document.createElement("div");
-  satelliteContent.className = "option-content";
-  satelliteContent.dataset.content = "satellite";
-
   // Create sources section
   sourcesContent.innerHTML = `
     <div class="control-section no-border">
@@ -1080,20 +955,6 @@ function createMapLayersPanel() {
       description: "Mapa de ruas detalhado",
       icon: "fas fa-road",
       color: "#3498db",
-    },
-    {
-      id: "google",
-      label: "Satélite Google",
-      description: "Imagens de alta resolução",
-      icon: "fas fa-satellite",
-      color: "#2ecc71",
-    },
-    {
-      id: "nasa",
-      label: "Satélite NASA",
-      description: "Imagens especiais",
-      icon: "fas fa-space-shuttle",
-      color: "#9b59b6",
     },
   ];
 
@@ -1122,64 +983,29 @@ function createMapLayersPanel() {
     sourceCards.appendChild(card);
   });
 
-  // Create 3D options content
-  options3DContent.innerHTML = `
-    <div class="control-section no-border">
-      <div class="option-sliders">
-        <div class="option-slider">
-          <div class="slider-header">
-            <label for="building-height">Altura dos Edifícios</label>
-            <span class="slider-value">1.0</span>
-          </div>
-          <div class="slider-container">
-            <i class="fas fa-building" style="font-size: 0.8em"></i>
-            <input type="range" id="building-height" min="0" max="2" step="0.1" value="1">
-            <i class="fas fa-building"></i>
-          </div>
-        </div>
-        
-        <div class="option-slider">
-          <div class="slider-header">
-            <label for="terrain-exaggeration">Exagero do Terreno</label>
-            <span class="slider-value">1.0</span>
-          </div>
-          <div class="slider-container">
-            <i class="fas fa-mountain" style="font-size: 0.8em"></i>
-            <input type="range" id="terrain-exaggeration" min="0.5" max="2" step="0.1" value="1">
-            <i class="fas fa-mountain"></i>
-          </div>
-        </div>
-        
-        <div class="enhancement-control-item">
-          <div class="control-header">
-            <div class="control-label">
-              <i class="fas fa-sun"></i>
-              <label for="shadows-toggle">Sombras</label>
-            </div>
-            <div class="toggle-switch">
-              <input type="checkbox" id="shadows-toggle" checked>
-              <span class="toggle-slider"></span>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  `;
-
-  // Create satellite options content with loading indicator
-  satelliteContent.innerHTML = `
-    <div class="control-section no-border">
-      <div class="loading-indicator">
-        <div class="spinner"></div>
-        <span>Carregando opções...</span>
-      </div>
-    </div>
-  `;
-
   // Add tab contents to main content
   mainContent.appendChild(sourcesContent);
-  mainContent.appendChild(options3DContent);
-  mainContent.appendChild(satelliteContent);
+
+  // Create 3D options content container so later references won't fail
+  const options3DContent = document.createElement("div");
+  options3DContent.className = "option-content";
+  options3DContent.dataset.content = "3d";
+  options3DContent.innerHTML = `
+    <div class="control-section">
+      <div class="control-row">
+        <label>Altura dos edifícios: <span class="slider-value">1.0</span></label>
+        <input type="range" id="building-height" min="0" max="3" step="0.1" value="1">
+      </div>
+      <div class="control-row">
+        <label>Exagero de terreno: <span class="slider-value">1.0</span></label>
+        <input type="range" id="terrain-exaggeration" min="0" max="3" step="0.1" value="1">
+      </div>
+      <div class="control-row">
+        <label for="shadows-toggle">Sombras 3D</label>
+        <input type="checkbox" id="shadows-toggle">
+      </div>
+    </div>
+  `;
 
   panel.appendChild(mainContent);
 
@@ -1225,8 +1051,7 @@ function createMapLayersPanel() {
     });
   }
 
-  // Load satellite enhancement controls dynamically
-  loadSatelliteControls(satelliteContent.querySelector(".control-section"));
+  // Nota: opções de satélite removidas do painel. A infraestrutura permanece disponível.
 }
 
 /**
@@ -1373,10 +1198,24 @@ function toggleMapLayersPanel() {
 
 /**
  * Alterna o modo 3D e exibe/oculta os botões de controle 3D
+ * NOTA: Este botão foi removido da interface unificada.
+ * A navegação 3D é agora ativada automaticamente ao iniciar navegação.
+ * Esta função é mantida como legacy code e não deve ser chamada.
  */
 function toggle3DMode() {
+  console.warn(
+    "[map-unified-controls] toggle3DMode() foi chamada mas o botão toggle-3d-mode foi removido da interface."
+  );
   const button = document.getElementById("toggle-3d-mode");
   const buttons3dContainer = document.getElementById("mode-3d-buttons");
+
+  // Se o botão não existe, não fazer nada (foi removido intencionalmente)
+  if (!button) {
+    console.warn(
+      "[map-unified-controls] Botão toggle-3d-mode não encontrado. Navegação 3D é ativada automaticamente."
+    );
+    return;
+  }
 
   // Verifica se os botões 3D estão atualmente visíveis
   const areControlsVisible =
@@ -1671,9 +1510,19 @@ function getTodayDateString() {
 
 /**
  * Alterna entre o modo 2D e 3D
+ * NOTA: Este função é legacy code. O botão toggle-3d-mode foi removido da interface.
+ * A navegação 3D é agora ativada automaticamente ao iniciar navegação.
  */
 async function toggleMode3D() {
   const button = document.getElementById("toggle-3d-mode");
+
+  // Se o botão não existe, não fazer nada
+  if (!button) {
+    console.warn(
+      "[map-unified-controls] toggleMode3D() chamada mas botão toggle-3d-mode foi removido."
+    );
+    return;
+  }
 
   if (is3DEnabled) {
     // Desativar modo 3D

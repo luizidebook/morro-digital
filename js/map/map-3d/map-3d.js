@@ -375,14 +375,14 @@ export function loadMapboxGLScript() {
 
     // Caso contrário, carregar o script
     const script = document.createElement("script");
-    script.src = "https://api.mapbox.com/mapbox-gl-js/v2.12.0/mapbox-gl.js";
+    script.src = "https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.js";
     script.async = true;
 
     script.onload = () => {
       console.log("[loadMapboxGLScript] Mapbox GL JS carregado com sucesso");
       // Carregar também o CSS necessário
       const link = document.createElement("link");
-      link.href = "https://api.mapbox.com/mapbox-gl-js/v2.12.0/mapbox-gl.css";
+      link.href = "https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.css";
       link.rel = "stylesheet";
       document.head.appendChild(link);
 

@@ -23,7 +23,10 @@ import {
   setupNavigationUIObserver,
   dispatchActionEvent,
 } from "../../utils/ui-position.js";
-import { startRotationMonitor } from "../../map/map-rotation-monitor.js";
+import {
+  startRotationMonitor,
+  stopRotationMonitor,
+} from "../../map/map-rotation-monitor.js";
 import {
   requestLocationPermission,
   getBestEffortLocation,
@@ -42,6 +45,13 @@ import {
   initNavigationControls,
   setMapRotation,
 } from "./navigationControls.js";
+import {
+  enable3DMode,
+  disable3DMode,
+  ensureMapbox3DContainer,
+  loadMapboxGLScript,
+} from "../../map/map-3d.js";
+import { enableNavigation3D } from "./navigation3D.js";
 import { UI_CONFIG } from "../navigationUi/navigationConfig.js";
 // Utilities
 import { appendMessage } from "../../assistant/assistant.js";
@@ -483,6 +493,100 @@ export async function startNavigation(destination) {
     monitorUserState();
     console.log("9. Monitoramento de estado do usuário iniciado");
     document.body.classList.add("navigation-active");
+
+    // Auto-ativar 3D e monitor de rotação quando a navegação iniciar
+    try {
+      console.log(
+        "[startNavigation] Iniciando ativação de modo 3D com navegação 3D automática"
+      );
+
+      // NOVO: Carregar Mapbox GL Script primeiro se necessário
+      if (!window.mapboxgl) {
+        console.log("[startNavigation] Mapbox GL não carregado, carregando...");
+        await loadMapboxGLScript();
+      }
+
+      // NOVO: Garantir que o container 3D existe
+      ensureMapbox3DContainer();
+
+      // NOVO: Usar a função enableNavigation3D para ativar modo 3D automaticamente
+      const navigation3DSuccess = await enableNavigation3D({
+        pitch: 65, // Pitch otimizado para primeira pessoa
+        navigationHeading: window.userLocation?.heading || 0,
+        animationDuration: 1200,
+        hideBaseMap: false, // Manter mapa base visível em primeiro plano
+      });
+
+      if (navigation3DSuccess) {
+        console.log(
+          "[startNavigation] ✅ Navegação 3D ativada automaticamente com sucesso"
+        );
+        navigationState.is3DModeEnabled = true;
+      } else {
+        console.warn(
+          "[startNavigation] ⚠️ Navegação 3D retornou falso, mas continuando com 2D"
+        );
+        // Não falhar completamente se 3D não funcionar
+      }
+
+      console.log(
+        "[startNavigation] Iniciando monitor de rotação... startRotationMonitor é função?",
+        typeof startRotationMonitor === "function"
+      );
+
+      if (typeof startRotationMonitor === "function") {
+        navigationState.isRotationEnabled = true;
+        console.log(
+          "[startNavigation] Rotation enabled flag set to:",
+          navigationState.isRotationEnabled
+        );
+
+        if (
+          window.userLocation &&
+          typeof window.userLocation.heading === "number"
+        ) {
+          console.log(
+            "[startNavigation] Aplicando rotação inicial. Heading:",
+            window.userLocation.heading
+          );
+          try {
+            setMapRotation(window.userLocation.heading);
+            console.log(
+              "[startNavigation] ✅ Rotação inicial aplicada com sucesso"
+            );
+          } catch (err) {
+            console.warn(
+              "[startNavigation] ❌ Falha ao aplicar rotação inicial:",
+              err
+            );
+          }
+        } else {
+          console.warn("[startNavigation] User heading not available yet:", {
+            userLocationExists: !!window.userLocation,
+            headingType: window.userLocation
+              ? typeof window.userLocation.heading
+              : "N/A",
+          });
+        }
+
+        console.log("[startNavigation] Chamando startRotationMonitor...");
+        startRotationMonitor();
+        console.log(
+          "[startNavigation] ✅ Monitor de rotação iniciado para navegação"
+        );
+      } else {
+        console.warn(
+          "[startNavigation] ❌ startRotationMonitor não é uma função. Type:",
+          typeof startRotationMonitor
+        );
+      }
+    } catch (err) {
+      console.error(
+        "[startNavigation] ⚠️ Erro na ativação 3D/rotação, continuando com navegação 2D:",
+        err
+      );
+      // Continuar com navegação 2D se 3D falhar
+    }
 
     // NOVO: Registrar evento para análise
     if (typeof logNavigationEvent === "function") {
@@ -1457,6 +1561,29 @@ export function cancelNavigation(options = {}) {
 
   // Resetar flags importantes
   recalculationInProgress = false;
+  // Parar monitor de rotação e desativar 3D (se aplicável)
+  try {
+    if (typeof stopRotationMonitor === "function") stopRotationMonitor();
+  } catch (err) {
+    console.warn("[cancelNavigation] Erro ao parar monitor de rotação:", err);
+  }
+
+  try {
+    if (typeof disable3DMode === "function") disable3DMode();
+  } catch (err) {
+    console.warn("[cancelNavigation] Erro ao desativar 3D:", err);
+  }
+
+  // Remover botão fixo de encerrar navegação, se existir
+  try {
+    const endBtn = document.getElementById("end-navigation-btn");
+    if (endBtn && endBtn.parentNode) endBtn.parentNode.removeChild(endBtn);
+  } catch (err) {
+    console.warn(
+      "[cancelNavigation] Erro ao remover botão 'Encerrar navegação':",
+      err
+    );
+  }
 
   console.log("[cancelNavigation] Navegação cancelada com sucesso");
   return true;
@@ -1488,6 +1615,74 @@ export function addNavigationControls() {
       );
       banner.classList.remove(UI_CONFIG.CLASSES.MINIMIZED);
     }
+  }
+
+  // Adicionar botão fixo "Encerrar navegação" visível durante a navegação
+  try {
+    if (!document.getElementById("end-navigation-btn")) {
+      const endBtn = document.createElement("button");
+      endBtn.id = "end-navigation-btn";
+      endBtn.className = "end-navigation-button";
+      endBtn.textContent = "Encerrar navegação";
+
+      // Atributos de acessibilidade
+      endBtn.setAttribute("type", "button");
+      endBtn.setAttribute("aria-label", "Encerrar navegação");
+      endBtn.setAttribute(
+        "title",
+        "Clique para encerrar a navegação em andamento"
+      );
+
+      Object.assign(endBtn.style, {
+        position: "fixed",
+        right: "14px",
+        bottom: "18px",
+        zIndex: "2147483647",
+        background: "#ef4444",
+        color: "#ffffff",
+        border: "none",
+        padding: "10px 14px",
+        borderRadius: "8px",
+        boxShadow: "0 4px 12px rgba(0,0,0,0.2)",
+        cursor: "pointer",
+        fontWeight: "600",
+        fontSize: "14px",
+        fontFamily: "inherit",
+        transition: "all 0.2s ease",
+      });
+
+      endBtn.addEventListener("click", (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        // Perguntar confirmação antes de cancelar
+        if (typeof confirmCancelNavigation === "function") {
+          confirmCancelNavigation();
+        } else if (typeof cancelNavigation === "function") {
+          cancelNavigation();
+        }
+      });
+
+      // Adicionar efeito visual ao passar mouse
+      endBtn.addEventListener("mouseenter", () => {
+        endBtn.style.background = "#dc2626";
+        endBtn.style.boxShadow = "0 6px 16px rgba(0,0,0,0.3)";
+      });
+
+      endBtn.addEventListener("mouseleave", () => {
+        endBtn.style.background = "#ef4444";
+        endBtn.style.boxShadow = "0 4px 12px rgba(0,0,0,0.2)";
+      });
+
+      document.body.appendChild(endBtn);
+      console.log(
+        "[addNavigationControls] Botão 'Encerrar navegação' criado com sucesso"
+      );
+    }
+  } catch (err) {
+    console.warn(
+      "[addNavigationControls] Não foi possível criar botão 'Encerrar navegação':",
+      err
+    );
   }
 
   // Marcar como inicializado para evitar duplicação
