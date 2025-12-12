@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="pt">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <meta name="theme-color" content="#3b82f6" />
+<!-- Por: -->
+<meta name="theme-color" media="(prefers-color-scheme: light)" content="#3b82f6">
+<meta name="theme-color" media="(prefers-color-scheme: dark)" content="#1e40af">    <meta name="apple-mobile-web-app-status-bar-style" content="#3b82f6">
+    <meta
+      name="description"
+      content="Guia digital interativo de Morro de São Paulo"
+    />
+    <title>Morro de São Paulo Digital</title>
+    <link rel="stylesheet" href="./css/main.css" />
+  
+<!-- Carregar Leaflet primeiro (versão única) -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<!-- Carregar apenas uma versão do Leaflet -->
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<!-- Adicionar plugins necessários para rotação -->
+<script src="./js/plugins/leaflet.rotatedMarker.js"></script>
+<script src="./js/plugins/leaflet.mapbearing.js"></script>
+  <link
+    href="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.css"
+    rel="stylesheet"
+  />
+  <!-- Preconnect + preload para Mapbox GL: acelera ativação 3D quando necessário -->
+  <link rel="preconnect" href="https://api.mapbox.com" crossorigin />
+  <link rel="preload" href="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.js" as="script" />
+  <link rel="preload" href="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.css" as="style" />
+
+<script async src="https://docs.opencv.org/4.5.4/opencv.js"></script>
+
+<link
+rel="stylesheet"
+href="https://unpkg.com/swiper/swiper-bundle.min.css"
+/>
+<script src="https://unpkg.com/swiper/swiper-bundle.min.js"></script>
+
+<link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/awesomplete/1.1.5/awesomplete.min.css"
+    />
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/awesomplete/1.1.5/awesomplete.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/fuse.js/dist/fuse.js"></script>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css"
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper/swiper-bundle.min.css" />
+    <script src="https://cdn.jsdelivr.net/npm/swiper/swiper-bundle.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/weather-icons/2.0.10/css/weather-icons.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <style>
+      #loading-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: #0043b3;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        z-index: 10000;
+        transition: opacity 0.5s ease-in-out;
+      }
+      
+      #loading-overlay.fade-out {
+        opacity: 0;
+        pointer-events: none;
+      }
+      
+      .loading-spinner {
+        width: 50px;
+        height: 50px;
+        border: 5px solid rgba(255, 255, 255, 0.3);
+        border-radius: 50%;
+        border-top-color: #fff;
+        animation: spin 1s linear infinite;
+        margin-bottom: 20px;
+      }
+      
+      @keyframes spin {
+        to { transform: rotate(360deg); }
+      }
+      
+      .loading-text {
+        color: white;
+        font-size: 18px;
+        font-family: 'Poppins', sans-serif;
+        text-align: center;
+        max-width: 80%;
+      }
+    </style>
+
+    <style>
+      @media (forced-colors: active) {
+        button, 
+        .mapboxgl-ctrl-icon, 
+        .mapboxgl-ctrl button,
+        .custom-3d-control button {
+          forced-color-adjust: none;
+          color: CanvasText;
+          background-color: ButtonFace;
+          border-color: ButtonBorder;
+        }
+        
+        button:hover,
+        .mapboxgl-ctrl button:hover {
+          background-color: Highlight;
+          color: HighlightText;
+        }
+        
+        .custom-3d-control button.following {
+          background-color: Highlight;
+          color: HighlightText;
+        }
+        
+        .custom-3d-control button i {
+          color: currentColor;
+        }
+      }
+    </style>
+
+    <style>
+  /* Estilos para o popup "Você está aqui!" */
+  .you-are-here-popup .mapboxgl-popup-content {
+    background: #4CAF50;
+    color: white;
+    font-weight: bold;
+    padding: 10px 15px;
+    border-radius: 20px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.25);
+    font-family: Arial, sans-serif;
+    text-align: center;
+  }
+  
+  .you-are-here-popup .mapboxgl-popup-tip {
+    border-top-color: #4CAF50;
+  }
+  
+  /* Estilos para os botões ativos */
+  .mapboxgl-ctrl button.active,
+  .satellite-imagery-control.active,
+  .mapboxgl-ctrl button.following {
+    background-color: #4CAF50 !important;
+  }
+  
+  .mapboxgl-ctrl button.active i,
+  .satellite-imagery-control.active i,
+  .mapboxgl-ctrl button.following i {
+    color: white !important;
+  }
+</style>
+
+    <!-- TensorFlow.js otimizado - adicionar antes do fechamento da tag head -->
+    <script>
+        // Configuração global TensorFlow
+        window.tfConfig = {
+            models: {
+                // Versões alternativas de modelos para uso local ou via CDN
+                superResolution: {
+                    localPath: './assets/models/esrgan-tf2/',
+                    cdnPath: 'https://storage.googleapis.com/tfjs-models/savedmodel/esrgan-tf2/',
+                    modelType: 'tfjs'
+                }
+            },
+            useCDN: false,  // Preferir local por padrão para evitar CORS/404
+            useLocalOnly: false  // Se true, usa apenas modelos locais
+        };
+    </script>
+    
+    <!-- Carregar TensorFlow.js de forma otimizada -->
+    <script async defer src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@3.15.0/dist/tf.min.js" 
+            onerror="document.body.classList.add('tf-not-available');"
+            onload="document.body.classList.add('tf-loaded');"></script>
+
+    <!-- Detector de Capacidades -->
+    <script>
+        // Verificar capacidades do navegador para recursos avançados
+        window.appCapabilities = {
+            tensorflow: false,
+            webgl: false,
+            serviceWorker: 'serviceWorker' in navigator,
+            localStorage: !!window.localStorage,
+            webpSupport: false
+        };
+        
+        // Verificar WebGL (necessário para TensorFlow.js)
+        try {
+            const canvas = document.createElement('canvas');
+            const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+            window.appCapabilities.webgl = !!gl;
+        } catch (e) {
+            console.warn('WebGL não suportado');
+        }
+        
+        // Verificar suporte a WebP
+        const webpImg = new Image();
+        webpImg.onload = function() { window.appCapabilities.webpSupport = true; };
+        webpImg.onerror = function() { window.appCapabilities.webpSupport = false; };
+        webpImg.src = 'data:image/webp;base64,UklGRhoAAABXRUJQVlA4TA0AAAAvAAAAEAcQERGIiP4HAA==';
+        
+        // Aplicar classes ao body para CSS condicional
+        document.addEventListener('DOMContentLoaded', function() {
+            if (window.appCapabilities.webgl) document.body.classList.add('webgl-support');
+            if (window.appCapabilities.webpSupport) document.body.classList.add('webp-support');
+            if (window.appCapabilities.serviceWorker) document.body.classList.add('sw-support');
+        });
+    </script>
+
+    <!-- TensorFlow.js para detecção de capacidades iniciais -->
+    <script>
+        // Função para carregar TensorFlow.js de forma elegante
+        function loadTensorFlowOptimized() {
+            // Apenas tentar carregar se WebGL estiver disponível
+            if (!window.appCapabilities.webgl) {
+                console.log('WebGL não disponível, pulando carregamento do TensorFlow');
+                return;
+            }
+            
+            // Tentar carregar TensorFlow.js
+            const script = document.createElement('script');
+            script.src = 'https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@3.15.0/dist/tf.min.js';
+            script.async = true;
+            
+            // Eventos para detectar sucesso/falha
+            script.onload = function() {
+                window.appCapabilities.tensorflow = true;
+                document.body.classList.add('tf-support');
+                console.log('TensorFlow.js carregado com sucesso');
+            };
+            
+            script.onerror = function() {
+                window.appCapabilities.tensorflow = false;
+                console.warn('Falha ao carregar TensorFlow.js');
+            };
+            
+            document.head.appendChild(script);
+        }
+        
+        // Tentar carregar após um pequeno delay
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', function() {
+                setTimeout(loadTensorFlowOptimized, 2000); // Carregar após 2 segundos
+            });
+        } else {
+            setTimeout(loadTensorFlowOptimized, 2000);
+        }
+    </script>
+
+    <script>
+      // Provide global fallback URL for super resolution model
+      // Prefer local model by default to avoid CORS/404 issues
+      window.ESRGAN_FALLBACK_URL = "./assets/models/esrgan-tf2/model.json";
+    </script>
+</head>
+
+  <body>
+    <!-- App Shell -->
+    <div class="app-shell">
+      <!-- Cabeçalho -->
+      <header>
+        <div class="header-content">
+          <h1 data-i18n="welcome_message">Morro Digital</h1>
+          <p class="tagline" data-i18n="ask_first_time">Descubra o paraíso</p>
+        </div>
+      </header>
+
+      <!-- Mapa -->
+        <div id="map-container">
+          <div id="map"></div>
+          <!-- O widget será inserido aqui -->
+        </div>
+      </section>
+
+      <!-- Submenu dinâmico -->
+      <section id="submenu" class="hidden">
+        <div class="submenu-header">
+          <h3 class="submenu-title">Explorar Locais</h3>
+          <button class="close-button" aria-label="Fechar menu">×</button>
+        </div>
+        <div id="submenuContainer" aria-live="polite"></div>
+      </section>
+
+<!-- Quick Action Buttons -->
+<div class="quick-actions">
+  <button class="action-button primary mood-button" data-mood="happy">
+    <img class="mood-icon" src="./assets/emojis/sun_emojis/sun_emoji_1.png" alt="Humor do assistente">
+  </button>
+</div>
+
+      <!-- Assistente Virtual -->            
+      <div id="assistant-messages" class="assistant-modal hidden">
+        <button class="minimize-button" aria-label="Minimizar assistente">×</button>
+
+        <div class="messages-area"></div>
+
+        <!-- Quando em modo normal -->
+        <div class="message assistant" data-message-type="standard"></div>
+        <!-- Quando em modo de navegação -->
+        
+        <!-- Mensagem de navegação, com espaço para instruções -->
+        <div class="navigation-instruction-area"></div>
+      </div>
+
+<!-- Modal do Carrossel (Separado) -->
+<div id="carousel-modal" class="carousel-modal hidden">
+  <button class="minimize-button" aria-label="Minimizar carrossel">×</button>
+  <!-- Carrossel sem espaços desnecessários -->
+  <div class="carousel-container">
+    <div class="swiper-container">
+      <div class="swiper-wrapper">
+        <!-- Os slides serão inseridos aqui pelo JavaScript -->
+      </div>
+      <!-- Adicionar navegação e paginação do Swiper -->
+      <div class="swiper-pagination"></div>
+      <div class="swiper-button-next"></div>
+      <div class="swiper-button-prev"></div>
+    </div>
+    <div class="carousel-info-text">Primeira Praia</div>
+  </div>
+</div>    
+      
+      
+<!-- Campo de input do assistente, fora do balão -->
+<div id="assistant-input-area" class="assistant-input-area">
+  <input
+    type="text"
+    id="assistantInput"
+    placeholder="Pergunte algo sobre Morro de São Paulo..."
+    aria-label="Campo de entrada do assistente"
+  />
+  <button id="sendButton" aria-label="Enviar mensagem">
+    <i class="fas fa-paper-plane"></i>
+  </button>
+  <button id="voiceButton" aria-label="Enviar mensagem de voz">
+    <i class="fas fa-microphone"></i>
+  </button>
+  <button id="configButton" aria-label="Configurações do assistente">
+    <i class="fas fa-cog"></i>
+  </button>
+</div>
+       
+
+<div id="instruction-banner" class="instruction-banner hidden">
+  <div class="instruction-primary">
+    <span id="instruction-arrow">⬆️</span>
+    <h2 id="instruction-main">Siga em frente</h2>
+    <button id="minimize-navigation-btn" aria-label="Minimizar instruções de navegação" aria-expanded="true"></button>
+  </div>
+  <div class="instruction-secondary">
+    <p id="instruction-details">200m - Rua Caminho do Farol</p>
+    <div class="instruction-extra">
+      <p id="instruction-distance">📏: 200m</p>
+      <p id="instruction-time">⏱️: 2 minutos</p>
+    </div>
+    <!-- Adicionar o elemento de progresso que está faltando -->
+    <div id="route-progress-container">
+      <progress id="route-progress" value="0" max="100"></progress>
+      <span id="progress-text">0%</span>
+    </div>
+  </div>
+</div>
+
+    <!-- Loading Overlay -->
+    <div id="loading-overlay">
+      <div class="loading-content">
+        <div class="spinner"></div>
+        <p>Carregando Morro Digital...</p>
+      </div>
+    </div>
+
+    <!-- Scripts principais -->
+    <script type="module" src="./main.js"></script>
+    <script>
+      // Remove loading overlay when content loads
+      window.addEventListener("load", function () {
+        setTimeout(function () {
+          document.getElementById("loading-overlay").classList.add("fade-out");
+        }, 800);
+      });
+
+    </script>
+  </body>
+</html>
+

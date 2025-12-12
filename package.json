@@ -1,0 +1,22 @@
+{
+  "type": "module",
+  "dependencies": {
+    "@google-cloud/text-to-speech": "^4.3.0",
+    "cors": "^2.8.5",
+    "express": "^5.1.0",
+    "leaflet-routing-machine": "^3.2.12",
+    "node-fetch": "^3.3.2"
+  },
+  "name": "morro-digital",
+  "version": "1.0.0",
+  "description": "",
+  "main": "proxy-server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node server.cjs"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {}
+}
